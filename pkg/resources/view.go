@@ -176,6 +176,8 @@ func ExtractViewStatement(input string) string {
 		" AS WITH",
 		" AS (SELECT",
 		" AS (WITH",
+		" AS ( SELECT",
+		" AS ( WITH",
 	}
 
 	cleanString := space.ReplaceAllString(input, " ")

@@ -85,6 +85,8 @@ func Test_extractViewStatement(t *testing.T) {
 		want string
 	}{
 		{"select", args{"create view asdf as select * from foo"}, "select * from foo"},
+		{"select", args{"create view asdf comment = \"testing a (comment) \\\" here \" as (   \n select * from foo )"}, "( select * from foo )"},
+		{"select", args{"create view asdf as select * from foo"}, "select * from foo"},
 		{"cte", args{"create view jkl as with roles as (SELECT ROLE_NAME, ROLE_OWNER FROM INFORMATION_SCHEMA.APPLICABLE_ROLES) select * from roles;"}, "with roles as (SELECT ROLE_NAME, ROLE_OWNER FROM INFORMATION_SCHEMA.APPLICABLE_ROLES) select * from roles;"},
 		{"select-parens", args{"create view asdf as (select * from foo)"}, "(select * from foo)"},
 	}
