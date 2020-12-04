@@ -21,3 +21,5 @@ require (
 	golang.org/x/crypto v0.0.0-20200707235045-ab33eee955e0
 	gopkg.in/yaml.v2 v2.2.8 // indirect
 )
+
+replace github.com/hashicorp/terraform-plugin-docs => github.com/ryanking/terraform-plugin-docs v0.2.1-0.20201204174211-144148969526
