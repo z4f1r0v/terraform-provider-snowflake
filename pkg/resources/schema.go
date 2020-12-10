@@ -139,6 +139,8 @@ func CreateSchema(d *schema.ResourceData, meta interface{}) error {
 		builder.Managed()
 	}
 
+	v, ok := d.GetOk("data_retention_days")
+	log.Printf("[DEBUG] data_retention_days %v %v", v, ok)
 	if v, ok := d.GetOk("data_retention_days"); ok {
 		builder.WithDataRetentionDays(v.(int))
 	}

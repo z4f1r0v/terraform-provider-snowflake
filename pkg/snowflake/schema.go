@@ -3,6 +3,7 @@ package snowflake
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
@@ -96,6 +97,7 @@ func (sb *SchemaBuilder) Create() string {
 		q.WriteString(` WITH MANAGED ACCESS`)
 	}
 
+	log.Printf("[DEBUG] setting dataRetentionDays %v %v", sb.setDataRetentionDays, sb.dataRetentionDays)
 	if sb.setDataRetentionDays {
 		q.WriteString(fmt.Sprintf(` DATA_RETENTION_TIME_IN_DAYS = %d`, sb.dataRetentionDays))
 	}
