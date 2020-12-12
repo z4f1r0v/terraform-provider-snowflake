@@ -19,6 +19,7 @@ const (
 	StorageIntegrationType EntityType = "STORAGE INTEGRATION"
 	UserType               EntityType = "USER"
 	WarehouseType          EntityType = "WAREHOUSE"
+	FileFormatType         EntityType = "FILE FORMAT"
 )
 
 type Builder struct {
