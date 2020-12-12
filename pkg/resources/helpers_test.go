@@ -263,3 +263,11 @@ func procedureGrant(t *testing.T, id string, params map[string]interface{}) *sch
 	d.SetId(id)
 	return d
 }
+
+func fileFormat(t *testing.T, id string, params map[string]interface{}) *schema.ResourceData {
+	r := require.New(t)
+	d := schema.TestResourceDataRaw(t, resources.FileFormat().Schema, params)
+	r.NotNil(d)
+	d.SetId(id)
+	return d
+}
