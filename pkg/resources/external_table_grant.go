@@ -80,7 +80,7 @@ func ExternalTableGrant() *TerraformGrantResource {
 
 			Schema: externalTableGrantSchema,
 			Importer: &schema.ResourceImporter{
-				StateContext: schema.ImportStatePassthroughContext,
+				State: schema.ImportStatePassthrough,
 			},
 		},
 		ValidPrivs: validExternalTablePrivileges,

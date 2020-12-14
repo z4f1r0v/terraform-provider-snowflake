@@ -23,8 +23,9 @@ const (
 )
 
 type Builder struct {
-	entityType EntityType
-	name       string
+	entityType    EntityType
+	name          string
+	qualifiedName bool
 }
 
 func (b *Builder) Show() string {
@@ -40,7 +41,11 @@ func (b *Builder) Drop() string {
 }
 
 func (b *Builder) Rename(newName string) string {
-	return fmt.Sprintf(`ALTER %s "%s" RENAME TO "%s"`, b.entityType, b.name, newName)
+	if b.qualifiedName {
+		return fmt.Sprintf(`ALTER %s %s RENAME TO %s`, b.entityType, b.name, newName)
+	} else {
+		return fmt.Sprintf(`ALTER %s "%s" RENAME TO "%s"`, b.entityType, b.name, newName)
+	}
 }
 
 // SettingBuilder is an interface for a builder that allows you to set key value pairs
@@ -54,6 +59,7 @@ type SettingBuilder interface {
 
 type AlterPropertiesBuilder struct {
 	name                 string
+	qualifiedName        bool
 	entityType           EntityType
 	stringProperties     map[string]string
 	stringListProperties map[string][]string
@@ -65,6 +71,7 @@ type AlterPropertiesBuilder struct {
 func (b *Builder) Alter() *AlterPropertiesBuilder {
 	return &AlterPropertiesBuilder{
 		name:                 b.name,
+		qualifiedName:        b.qualifiedName,
 		entityType:           b.entityType,
 		stringProperties:     make(map[string]string),
 		stringListProperties: make(map[string][]string),
@@ -96,7 +103,12 @@ func (ab *AlterPropertiesBuilder) SetFloat(key string, value float64) {
 
 func (ab *AlterPropertiesBuilder) Statement() string {
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf(`ALTER %s "%s" SET`, ab.entityType, ab.name)) // TODO handle error
+
+	if ab.qualifiedName {
+		sb.WriteString(fmt.Sprintf(`ALTER %s %s SET`, ab.entityType, ab.name))
+	} else {
+		sb.WriteString(fmt.Sprintf(`ALTER %s "%s" SET`, ab.entityType, ab.name))
+	}
 
 	for k, v := range ab.stringProperties {
 		sb.WriteString(fmt.Sprintf(" %s='%s'", strings.ToUpper(k), EscapeString(v)))
@@ -123,6 +135,7 @@ func (ab *AlterPropertiesBuilder) Statement() string {
 
 type CreateBuilder struct {
 	name                 string
+	qualifiedName        bool
 	entityType           EntityType
 	stringProperties     map[string]string
 	stringListProperties map[string][]string
@@ -134,6 +147,7 @@ type CreateBuilder struct {
 func (b *Builder) Create() *CreateBuilder {
 	return &CreateBuilder{
 		name:                 b.name,
+		qualifiedName:        b.qualifiedName,
 		entityType:           b.entityType,
 		stringProperties:     make(map[string]string),
 		stringListProperties: make(map[string][]string),
@@ -165,8 +179,11 @@ func (b *CreateBuilder) SetFloat(key string, value float64) {
 
 func (b *CreateBuilder) Statement() string {
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf(`CREATE %s "%s"`, b.entityType, b.name)) // TODO handle error
-
+	if b.qualifiedName {
+		sb.WriteString(fmt.Sprintf(`CREATE %s %s`, b.entityType, b.name)) // TODO handle error
+	} else {
+		sb.WriteString(fmt.Sprintf(`CREATE %s "%s"`, b.entityType, b.name)) // TODO handle error
+	}
 	sortedStringProperties := make([]string, 0)
 	for k := range b.stringProperties {
 		sortedStringProperties = append(sortedStringProperties, k)

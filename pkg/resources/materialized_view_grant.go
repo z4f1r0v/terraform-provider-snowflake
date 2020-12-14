@@ -86,7 +86,7 @@ func MaterializedViewGrant() *TerraformGrantResource {
 
 			Schema: materializedViewGrantSchema,
 			Importer: &schema.ResourceImporter{
-				StateContext: schema.ImportStatePassthroughContext,
+				State: schema.ImportStatePassthrough,
 			},
 		},
 		ValidPrivs: validMaterializedViewPrivileges,
