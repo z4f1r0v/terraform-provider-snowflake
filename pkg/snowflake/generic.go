@@ -37,6 +37,9 @@ func (b *Builder) Describe() string {
 }
 
 func (b *Builder) Drop() string {
+	if b.qualifiedName {
+		return fmt.Sprintf(`DROP %s %s`, b.entityType, b.name)
+	}
 	return fmt.Sprintf(`DROP %s "%s"`, b.entityType, b.name)
 }
 

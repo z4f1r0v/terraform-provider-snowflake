@@ -78,6 +78,10 @@ func (b FileFormatBuilder) Alter() *AlterPropertiesBuilder {
 	return b.builder().Alter()
 }
 
+func (b FileFormatBuilder) Drop() string {
+	return b.builder().Drop()
+}
+
 type FileFormatOptions struct {
 	RecordDelimiter            *string  `json:"RECORD_DELIMITER"`
 	FieldDelimiter             *string  `json:"FIELD_DELIMITER"`

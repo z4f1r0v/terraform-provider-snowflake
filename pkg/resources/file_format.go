@@ -369,5 +369,13 @@ func UpdateFileFormat(d *schema.ResourceData, meta interface{}) error {
 }
 
 func DeleteFileFormat(d *schema.ResourceData, meta interface{}) error {
-	return nil
+	db := meta.(*sql.DB)
+	ffID, err := fileFormatIDFromString(d.Id())
+	if err != nil {
+		return errors.Wrapf(err, "unable to parse file format id %s", d.Id())
+	}
+
+	builder := snowflake.FileFormat(ffID.DatabaseName, ffID.SchemaName, ffID.FileFormatName)
+
+	return snowflake.Exec(db, builder.Drop())
 }
