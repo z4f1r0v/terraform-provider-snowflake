@@ -10,6 +10,7 @@ import (
 
 	"github.com/chanzuckerberg/terraform-provider-snowflake/pkg/snowflake"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/pkg/errors"
 )
 
@@ -37,9 +38,7 @@ var fileFormatSchema = map[string]*schema.Schema{
 	"comment": {
 		Type:     schema.TypeString,
 		Optional: true,
-		// Description:  "",
 	},
-
 	"type": {
 		Type:     schema.TypeString,
 		Computed: true,
@@ -62,12 +61,57 @@ var fileFormatSchema = map[string]*schema.Schema{
 					Optional: true,
 					Computed: true,
 				},
+				"record_delimiter": {
+					Type:         schema.TypeString,
+					Optional:     true,
+					Computed:     true,
+					ValidateFunc: validation.StringLenBetween(1, 1),
+				},
+				"field_delimiter": {
+					Type:         schema.TypeString,
+					Optional:     true,
+					Computed:     true,
+					ValidateFunc: validation.StringLenBetween(1, 1),
+				},
+				"file_extension": {
+					Type:     schema.TypeString,
+					Optional: true,
+					Computed: true,
+				},
+				"skip_header": {
+					Type:     schema.TypeInt,
+					Optional: true,
+					Computed: true,
+				},
+				"skip_blank_lines": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Computed: true,
+				},
+
+				//  SKIP_HEADER = <integer>
+				//  SKIP_BLANK_LINES = TRUE | FALSE
+				//  DATE_FORMAT = '<string>' | AUTO
+				//  TIME_FORMAT = '<string>' | AUTO
+				//  TIMESTAMP_FORMAT = '<string>' | AUTO
+				//  BINARY_FORMAT = HEX | BASE64 | UTF8
+				//  ESCAPE = '<character>' | NONE
+				//  ESCAPE_UNENCLOSED_FIELD = '<character>' | NONE
+				//  TRIM_SPACE = TRUE | FALSE
+				//  FIELD_OPTIONALLY_ENCLOSED_BY = '<character>' | NONE
+				//  NULL_IF = ( '<string>' [ , '<string>' ... ] )
+				//  ERROR_ON_COLUMN_COUNT_MISMATCH = TRUE | FALSE
+				//  REPLACE_INVALID_CHARACTERS = TRUE | FALSE
+				//  VALIDATE_UTF8 = TRUE | FALSE
+				//  EMPTY_FIELD_AS_NULL = TRUE | FALSE
+				//  SKIP_BYTE_ORDER_MARK = TRUE | FALSE
+				//  ENCODING = '<string>' | UTF8
 			}},
 	},
 
 	"json": {
-		Type: schema.TypeSet,
-		// MaxItems:      1,
+		Type:          schema.TypeSet,
+		MaxItems:      1,
 		Optional:      true,
 		ConflictsWith: []string{"csv", "avro", "orc", "parquet", "xml"},
 		Elem: &schema.Resource{
@@ -162,6 +206,53 @@ var fileFormatSchema = map[string]*schema.Schema{
 					Computed: true,
 				},
 			},
+		},
+	},
+}
+
+type optionType string
+
+const (
+	optionTypeString = "string"
+	optionTypeBool   = "bool"
+	optionTypeInt    = "int"
+)
+
+type typeOption struct {
+	ttype optionType
+
+	reader func(*snowflake.FileFormatOptions) interface{}
+}
+
+var fileFormatTypeOptions = map[string]map[string]typeOption{
+	"csv": {
+		"compression": {
+			ttype:  optionTypeString,
+			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.Compression },
+		},
+		"record_delimiter": {
+			ttype:  optionTypeString,
+			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.RecordDelimiter },
+		},
+		"field_delimiter": {
+			ttype:  optionTypeString,
+			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.FieldDelimiter },
+		},
+		"file_extension": {
+			ttype:  optionTypeString,
+			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.FileExtension },
+		},
+		"trim_space": {
+			ttype:  optionTypeBool,
+			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.TrimSpace },
+		},
+		"skip_header": {
+			ttype:  optionTypeInt,
+			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.SkipHeader },
+		},
+		"skip_blank_lines": {
+			ttype:  optionTypeBool,
+			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.SkipBlankLines },
 		},
 	},
 }
@@ -270,6 +361,17 @@ func CreateFileFormat(d *schema.ResourceData, meta interface{}) error {
 		if v, ok := params["compression"]; ok && v != "" {
 			builder.SetString("compression", v.(string))
 		}
+	case "csv":
+		for _, options := range fileFormatTypeOptions {
+			for name, opt := range options {
+				if v, ok := params[name]; ok && v != "" {
+					switch opt.ttype {
+					case optionTypeString:
+						builder.SetString(name, v.(string))
+					}
+				}
+			}
+		}
 	}
 
 	err = snowflake.Exec(db, builder.Statement())
@@ -346,13 +448,12 @@ func ReadFileFormat(d *schema.ResourceData, meta interface{}) error {
 
 	asdf := map[string]interface{}{}
 
-	if ff.ParsedFormatOptions.Compression != nil {
-		asdf["compression"] = *ff.ParsedFormatOptions.Compression
+	for n, opt := range fileFormatTypeOptions[strings.ToLower(ff.TType.String)] {
+		if v := opt.reader(ff.ParsedFormatOptions); v != nil {
+			asdf[n] = v
+		}
 	}
 
-	if ff.ParsedFormatOptions.TrimSpace != nil {
-		asdf["trim_space"] = *ff.ParsedFormatOptions.TrimSpace
-	}
 	a := []map[string]interface{}{asdf}
 
 	log.Printf("[DEBUG] asdf %#v %#v", strings.ToLower(ff.TType.String), a)
@@ -365,7 +466,7 @@ func ReadFileFormat(d *schema.ResourceData, meta interface{}) error {
 }
 
 func UpdateFileFormat(d *schema.ResourceData, meta interface{}) error {
-	return nil
+	return errors.New("not implemented")
 }
 
 func DeleteFileFormat(d *schema.ResourceData, meta interface{}) error {

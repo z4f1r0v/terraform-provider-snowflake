@@ -14,8 +14,13 @@ import (
 func TestAccFileFormat_empty(t *testing.T) {
 	types := map[string]map[string]string{
 		"csv": {
-			"compression": "AUTO",
-			"trim_space":  "false",
+			"compression":      "AUTO",
+			"trim_space":       "false",
+			"record_delimiter": "\n",
+			"field_delimiter":  ",",
+			"file_extension":   "",
+			"skip_header":      "0",
+			"skip_blank_lines": "false",
 		},
 		"json": {
 			"compression": "AUTO",
