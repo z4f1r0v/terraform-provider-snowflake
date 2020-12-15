@@ -10,14 +10,10 @@ import (
 
 	"github.com/chanzuckerberg/terraform-provider-snowflake/pkg/snowflake"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/pkg/errors"
 )
 
 var fileFormatProperties = []string{
-	"database",
-	"schema",
-	"name",
 	"type",
 	"comment",
 }
@@ -38,16 +34,135 @@ var fileFormatSchema = map[string]*schema.Schema{
 		Required:    true,
 		Description: "Name of the file format.",
 	},
-	"type": {
-		Type:     schema.TypeString,
-		Required: true,
-		// Description:  "",
-		ValidateFunc: validation.StringInSlice([]string{"CSV", "JSON", "AVRO", "ORC", "PARQUET", "XML"}, true),
-	},
 	"comment": {
 		Type:     schema.TypeString,
 		Optional: true,
 		// Description:  "",
+	},
+
+	"type": {
+		Type:     schema.TypeString,
+		Computed: true,
+	},
+
+	"csv": {
+		Type:          schema.TypeSet,
+		MaxItems:      1,
+		Optional:      true,
+		ConflictsWith: []string{"json", "avro", "orc", "parquet", "xml"},
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"compression": {
+					Type:     schema.TypeString,
+					Optional: true,
+					Computed: true,
+				},
+				"trim_space": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Computed: true,
+				},
+			}},
+	},
+
+	"json": {
+		Type: schema.TypeSet,
+		// MaxItems:      1,
+		Optional:      true,
+		ConflictsWith: []string{"csv", "avro", "orc", "parquet", "xml"},
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"compression": {
+					Type:     schema.TypeString,
+					Optional: true,
+					Computed: true,
+				},
+				"trim_space": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Computed: true,
+				},
+			},
+		},
+	},
+
+	"avro": {
+		Type:          schema.TypeSet,
+		MaxItems:      1,
+		Optional:      true,
+		ConflictsWith: []string{"csv", "json", "orc", "parquet", "xml"},
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"compression": {
+					Type:     schema.TypeString,
+					Optional: true,
+					Computed: true,
+				},
+				"trim_space": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Computed: true,
+				},
+			},
+		},
+	},
+
+	"orc": {
+		Type:          schema.TypeSet,
+		MaxItems:      1,
+		Optional:      true,
+		ConflictsWith: []string{"csv", "json", "avro", "parquet", "xml"},
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"trim_space": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Computed: true,
+				},
+			},
+		},
+	},
+
+	"parquet": {
+		Type:          schema.TypeSet,
+		MaxItems:      1,
+		Optional:      true,
+		ConflictsWith: []string{"csv", "json", "avro", "orc", "xml"},
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"compression": {
+					Type:     schema.TypeString,
+					Optional: true,
+					Computed: true,
+				},
+				"trim_space": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Computed: true,
+				},
+			},
+		},
+	},
+
+	"xml": {
+		Type:          schema.TypeSet,
+		MaxItems:      1,
+		Optional:      true,
+		ConflictsWith: []string{"csv", "json", "avro", "orc", "parquet"},
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"compression": {
+					Type:     schema.TypeString,
+					Optional: true,
+					Computed: true,
+				},
+				"trim_space": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Computed: true,
+				},
+			},
+		},
 	},
 }
 
@@ -109,13 +224,38 @@ func fileFormatIDFromString(stringID string) (*fileFromatID, error) {
 	return fileFormat, nil
 }
 
+func getTypeAndParams(d *schema.ResourceData) (string, map[string]interface{}, error) {
+	types := []string{
+		"csv",
+		"json",
+		"avro",
+		"orc",
+		"parquet",
+		"xml",
+	}
+
+	for _, ttype := range types {
+		if v, ok := d.GetOkExists(ttype); ok {
+			t := v.(*schema.Set)
+			log.Printf("[DEBUG] %#v", t)
+			return ttype, t.List()[0].(map[string]interface{}), nil
+		}
+	}
+
+	return "", nil, errors.New("could not extract file format parameters")
+}
+
 func CreateFileFormat(d *schema.ResourceData, meta interface{}) error {
 	db := meta.(*sql.DB)
 	name := d.Get("name").(string)
 	database := d.Get("database").(string)
 	schema := d.Get("schema").(string)
 
-	ttype := d.Get("type").(string)
+	ttype, params, err := getTypeAndParams(d)
+	log.Printf("[DEBUG] params %#v", params)
+	if err != nil {
+		return err
+	}
 
 	builder := snowflake.FileFormat(database, schema, name).Create(ttype)
 
@@ -125,7 +265,14 @@ func CreateFileFormat(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	err := snowflake.Exec(db, builder.Statement())
+	switch ttype {
+	case "json":
+		if v, ok := params["compression"]; ok && v != "" {
+			builder.SetString("compression", v.(string))
+		}
+	}
+
+	err = snowflake.Exec(db, builder.Statement())
 	if err != nil {
 		return errors.Wrap(err, "unable to create file format")
 	}
@@ -172,27 +319,44 @@ func ReadFileFormat(d *schema.ResourceData, meta interface{}) error {
 		return errors.Wrap(err, "unable to scan file format row")
 	}
 
-	err = d.Set("database", ff.Database)
+	err = d.Set("database", ff.Database.String)
 	if err != nil {
 		return err
 	}
 
-	err = d.Set("schema", ff.Schema)
+	err = d.Set("schema", ff.Schema.String)
 	if err != nil {
 		return err
 	}
 
-	err = d.Set("name", ff.Name)
+	err = d.Set("name", ff.Name.String)
 	if err != nil {
 		return err
 	}
 
-	err = d.Set("type", ff.TType)
+	err = d.Set("comment", ff.Comment.String)
 	if err != nil {
 		return err
 	}
 
-	err = d.Set("comment", ff.Comment)
+	err = d.Set("type", ff.TType.String)
+	if err != nil {
+		return err
+	}
+
+	asdf := map[string]interface{}{}
+
+	if ff.ParsedFormatOptions.Compression != nil {
+		asdf["compression"] = *ff.ParsedFormatOptions.Compression
+	}
+
+	if ff.ParsedFormatOptions.TrimSpace != nil {
+		asdf["trim_space"] = *ff.ParsedFormatOptions.TrimSpace
+	}
+	a := []map[string]interface{}{asdf}
+
+	log.Printf("[DEBUG] asdf %#v %#v", strings.ToLower(ff.TType.String), a)
+	err = d.Set(strings.ToLower(ff.TType.String), a)
 	if err != nil {
 		return err
 	}

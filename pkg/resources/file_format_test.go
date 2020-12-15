@@ -4,13 +4,16 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	"github.com/chanzuckerberg/terraform-provider-snowflake/pkg/provider"
+	"github.com/chanzuckerberg/terraform-provider-snowflake/pkg/resources"
+	"github.com/stretchr/testify/require"
 	// . "github.com/chanzuckerberg/terraform-provider-snowflake/pkg/testhelpers"
 )
 
 func TestFileFormat(t *testing.T) {
-	// r := require.New(t)
-	// err := resources.FileFormat().InternalValidate(provider.Provider().Schema, true)
-	// r.NoError(err)
+	r := require.New(t)
+	err := resources.FileFormat().InternalValidate(provider.Provider().Schema, true)
+	r.NoError(err)
 }
 
 // func TestUserCreate(t *testing.T) {
