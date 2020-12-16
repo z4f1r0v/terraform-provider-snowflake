@@ -82,6 +82,186 @@ func (b FileFormatBuilder) Drop() string {
 	return b.builder().Drop()
 }
 
+type FileFormatOptionType string
+
+const (
+	OptionTypeString      = "string"
+	OptionTypeBool        = "bool"
+	OptionTypeInt         = "int"
+	OptionTypeStringSlice = "[]string"
+)
+
+type TypeFileFormatOption struct {
+	Type FileFormatOptionType
+
+	Reader func(*FileFormatOptions) interface{}
+}
+
+// the format options are returned from snowflake as a json blob, we parse them into a struct in
+// pkg/snowflake and use these mappings to extract fields out into the terraform state
+// some of the format options are format specific
+var FileFormatTypeOptions = map[string]map[string]TypeFileFormatOption{
+	"csv": {
+		"compression": {
+			Type:   OptionTypeString,
+			Reader: func(o *FileFormatOptions) interface{} { return o.Compression },
+		},
+		"record_delimiter": {
+			Type:   OptionTypeString,
+			Reader: func(o *FileFormatOptions) interface{} { return o.RecordDelimiter },
+		},
+		"field_delimiter": {
+			Type:   OptionTypeString,
+			Reader: func(o *FileFormatOptions) interface{} { return o.FieldDelimiter },
+		},
+		"file_extension": {
+			Type:   OptionTypeString,
+			Reader: func(o *FileFormatOptions) interface{} { return o.FileExtension },
+		},
+		"trim_space": {
+			Type:   OptionTypeBool,
+			Reader: func(o *FileFormatOptions) interface{} { return o.TrimSpace },
+		},
+		"skip_header": {
+			Type:   OptionTypeInt,
+			Reader: func(o *FileFormatOptions) interface{} { return o.SkipHeader },
+		},
+		"skip_blank_lines": {
+			Type:   OptionTypeBool,
+			Reader: func(o *FileFormatOptions) interface{} { return o.SkipBlankLines },
+		},
+		"date_format": {
+			Type:   OptionTypeString,
+			Reader: func(o *FileFormatOptions) interface{} { return o.DateFormat },
+		},
+		"time_format": {
+			Type:   OptionTypeString,
+			Reader: func(o *FileFormatOptions) interface{} { return o.TimeFormat },
+		},
+		"timestamp_format": {
+			Type:   OptionTypeString,
+			Reader: func(o *FileFormatOptions) interface{} { return o.TimestampFormat },
+		},
+		"binary_format": {
+			Type:   OptionTypeString,
+			Reader: func(o *FileFormatOptions) interface{} { return o.BinaryFormat },
+		},
+		"escape": {
+			Type: OptionTypeString,
+			Reader: func(o *FileFormatOptions) interface{} {
+				t := o.Escape
+				if t != nil && *t == "NONE" {
+					return nil
+				}
+				return t
+			},
+		},
+		"escape_unenclosed_field": {
+			Type:   OptionTypeString,
+			Reader: func(o *FileFormatOptions) interface{} { return o.EscapeUnenclosedField },
+		},
+		"field_optionally_enclosed_by": {
+			Type: OptionTypeString,
+			Reader: func(o *FileFormatOptions) interface{} {
+				t := o.FieldOptionallyEnclosedBy
+				if t != nil && *t == "NONE" {
+					return nil
+				}
+				return t
+			},
+		},
+		"error_on_column_count_mismatch": {
+			Type:   OptionTypeBool,
+			Reader: func(o *FileFormatOptions) interface{} { return o.ErrorOnColumnCountMismatch },
+		},
+		"replace_invalid_characters": {
+			Type:   OptionTypeBool,
+			Reader: func(o *FileFormatOptions) interface{} { return o.ReplaceInvalidCharacters },
+		},
+		"validate_utf8": {
+			Type: OptionTypeBool,
+			Reader: func(o *FileFormatOptions) interface{} {
+				fmt.Printf("[DEBUG] YYY utf8 %#v \n", *o.ValidateUtf8)
+				return o.ValidateUtf8
+			},
+		},
+		"empty_field_as_null": {
+			Type:   OptionTypeBool,
+			Reader: func(o *FileFormatOptions) interface{} { return o.EmptyFieldAsNull },
+		},
+		"skip_byte_order_mark": {
+			Type:   OptionTypeBool,
+			Reader: func(o *FileFormatOptions) interface{} { return o.SkipByteOrderMark },
+		},
+		"encoding": {
+			Type:   OptionTypeString,
+			Reader: func(o *FileFormatOptions) interface{} { return o.Encoding },
+		},
+		"null_if": {
+			Type:   OptionTypeStringSlice,
+			Reader: func(o *FileFormatOptions) interface{} { return o.NullIf },
+		},
+	},
+	"json": {
+		"compression": {
+			Type:   OptionTypeString,
+			Reader: func(o *FileFormatOptions) interface{} { return o.Compression },
+		},
+		"date_format": {
+			Type:   OptionTypeString,
+			Reader: func(o *FileFormatOptions) interface{} { return o.DateFormat },
+		},
+		"time_format": {
+			Type:   OptionTypeString,
+			Reader: func(o *FileFormatOptions) interface{} { return o.TimeFormat },
+		},
+		"timestamp_format": {
+			Type:   OptionTypeString,
+			Reader: func(o *FileFormatOptions) interface{} { return o.TimestampFormat },
+		},
+		"binary_format": {
+			Type:   OptionTypeString,
+			Reader: func(o *FileFormatOptions) interface{} { return o.BinaryFormat },
+		},
+		"null_if": {
+			Type:   OptionTypeStringSlice,
+			Reader: func(o *FileFormatOptions) interface{} { return o.NullIf },
+		},
+		"file_extension": {
+			Type:   OptionTypeString,
+			Reader: func(o *FileFormatOptions) interface{} { return o.FileExtension },
+		},
+		"replace_invalid_characters": {
+			Type:   OptionTypeBool,
+			Reader: func(o *FileFormatOptions) interface{} { return o.ReplaceInvalidCharacters },
+		},
+		"skip_byte_order_mark": {
+			Type:   OptionTypeBool,
+			Reader: func(o *FileFormatOptions) interface{} { return o.SkipByteOrderMark },
+		},
+		"enable_octal": {
+			Type:   OptionTypeBool,
+			Reader: func(o *FileFormatOptions) interface{} { return o.EnableOctal },
+		},
+		"allow_duplicate": {
+			Type:   OptionTypeBool,
+			Reader: func(o *FileFormatOptions) interface{} { return o.AllowDuplicate },
+		},
+		"strip_outer_array": {
+			Type:   OptionTypeBool,
+			Reader: func(o *FileFormatOptions) interface{} { return o.StripOuterArray },
+		},
+		"strip_null_values": {
+			Type:   OptionTypeBool,
+			Reader: func(o *FileFormatOptions) interface{} { return o.StripNullValues },
+		},
+		"ignore_utf8_errors": {
+			Type:   OptionTypeBool,
+			Reader: func(o *FileFormatOptions) interface{} { return o.IgnoreUtf8Errors },
+		},
+	},
+}
+
 type FileFormatOptions struct {
 	RecordDelimiter            *string  `json:"RECORD_DELIMITER"`
 	FieldDelimiter             *string  `json:"FIELD_DELIMITER"`
@@ -104,6 +284,11 @@ type FileFormatOptions struct {
 	EmptyFieldAsNull           *bool    `json:"EMPTY_FIELD_AS_NULL"`
 	SkipByteOrderMark          *bool    `json:"SKIP_BYTE_ORDER_MARK"`
 	Encoding                   *string  `json:"ENCODING"`
+	EnableOctal                *bool    `json:"ENABLE_OCTAL"`
+	AllowDuplicate             *bool    `json:"ALLOW_DUPLICATE"`
+	StripOuterArray            *bool    `json:"STRIP_OUTER_ARRAY"`
+	StripNullValues            *bool    `json:"STRIP_NULL_VALUES"`
+	IgnoreUtf8Errors           *bool    `json:"IGNORE_UTF8_ERRORS"`
 }
 
 type fileFormat struct {

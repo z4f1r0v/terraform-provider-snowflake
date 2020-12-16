@@ -1,9 +1,7 @@
 package resources
 
 import (
-	"bytes"
 	"database/sql"
-	"encoding/csv"
 	"fmt"
 	"log"
 	"strings"
@@ -17,6 +15,10 @@ import (
 var fileFormatProperties = []string{
 	"type",
 	"comment",
+}
+
+func debugf(msg string, params ...interface{}) {
+	fmt.Printf("[DEBUG] %#v %#v\n", msg, params)
 }
 
 var fileFormatSchema = map[string]*schema.Schema{
@@ -93,7 +95,6 @@ var fileFormatSchema = map[string]*schema.Schema{
 					Optional: true,
 					Computed: true,
 				},
-
 				"time_format": {
 					Type:     schema.TypeString,
 					Optional: true,
@@ -187,6 +188,75 @@ var fileFormatSchema = map[string]*schema.Schema{
 					Optional: true,
 					Computed: true,
 				},
+				"date_format": {
+					Type:     schema.TypeString,
+					Optional: true,
+					Computed: true,
+				},
+				"time_format": {
+					Type:     schema.TypeString,
+					Optional: true,
+					Computed: true,
+				},
+				"timestamp_format": {
+					Type:     schema.TypeString,
+					Optional: true,
+					Computed: true,
+				},
+				"binary_format": {
+					Type:         schema.TypeString,
+					Optional:     true,
+					Computed:     true,
+					ValidateFunc: validation.StringInSlice([]string{"HEX", "BASE64", "UTF8"}, true),
+				},
+				"null_if": {
+					Type:     schema.TypeList,
+					Optional: true,
+					Computed: true,
+					Elem: &schema.Schema{
+						Type: schema.TypeString,
+					},
+				},
+				"file_extension": {
+					Type:     schema.TypeString,
+					Optional: true,
+					Computed: true,
+				},
+				"replace_invalid_characters": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Computed: true,
+				},
+				"skip_byte_order_mark": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Computed: true,
+				},
+				"enable_octal": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Computed: true,
+				},
+				"allow_duplicate": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Computed: true,
+				},
+				"strip_outer_array": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Computed: true,
+				},
+				"strip_null_values": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Computed: true,
+				},
+				"ignore_utf8_errors": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Computed: true,
+				},
 			},
 		},
 	},
@@ -271,146 +341,6 @@ var fileFormatSchema = map[string]*schema.Schema{
 	},
 }
 
-type optionType string
-
-const (
-	optionTypeString      = "string"
-	optionTypeBool        = "bool"
-	optionTypeInt         = "int"
-	optionTypeStringSlice = "[]string"
-)
-
-type typeOption struct {
-	ttype optionType
-
-	reader func(*snowflake.FileFormatOptions) interface{}
-}
-
-var fileFormatTypeOptions = map[string]map[string]typeOption{
-	"csv": {
-		"compression": {
-			ttype:  optionTypeString,
-			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.Compression },
-		},
-		"record_delimiter": {
-			ttype:  optionTypeString,
-			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.RecordDelimiter },
-		},
-		"field_delimiter": {
-			ttype:  optionTypeString,
-			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.FieldDelimiter },
-		},
-		"file_extension": {
-			ttype:  optionTypeString,
-			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.FileExtension },
-		},
-		"trim_space": {
-			ttype:  optionTypeBool,
-			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.TrimSpace },
-		},
-		"skip_header": {
-			ttype:  optionTypeInt,
-			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.SkipHeader },
-		},
-		"skip_blank_lines": {
-			ttype:  optionTypeBool,
-			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.SkipBlankLines },
-		},
-		"date_format": {
-			ttype:  optionTypeString,
-			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.DateFormat },
-		},
-		"time_format": {
-			ttype:  optionTypeString,
-			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.TimeFormat },
-		},
-		"timestamp_format": {
-			ttype:  optionTypeString,
-			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.TimestampFormat },
-		},
-		"binary_format": {
-			ttype:  optionTypeString,
-			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.BinaryFormat },
-		},
-		"escape": {
-			ttype: optionTypeString,
-			reader: func(o *snowflake.FileFormatOptions) interface{} {
-				t := o.Escape
-				if t != nil && *t == "NONE" {
-					return nil
-				}
-				return t
-			},
-		},
-		"escape_unenclosed_field": {
-			ttype:  optionTypeString,
-			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.EscapeUnenclosedField },
-		},
-		"field_optionally_enclosed_by": {
-			ttype: optionTypeString,
-			reader: func(o *snowflake.FileFormatOptions) interface{} {
-				t := o.FieldOptionallyEnclosedBy
-				if t != nil && *t == "NONE" {
-					return nil
-				}
-				return t
-			},
-		},
-		"error_on_column_count_mismatch": {
-			ttype:  optionTypeBool,
-			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.ErrorOnColumnCountMismatch },
-		},
-		"replace_invalid_characters": {
-			ttype:  optionTypeBool,
-			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.ReplaceInvalidCharacters },
-		},
-		"validate_utf8": {
-			ttype: optionTypeBool,
-			reader: func(o *snowflake.FileFormatOptions) interface{} {
-				fmt.Printf("[DEBUG] YYY utf8 %#v \n", *o.ValidateUtf8)
-				return o.ValidateUtf8
-			},
-		},
-		"empty_field_as_null": {
-			ttype:  optionTypeBool,
-			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.EmptyFieldAsNull },
-		},
-		"skip_byte_order_mark": {
-			ttype:  optionTypeBool,
-			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.SkipByteOrderMark },
-		},
-		"encoding": {
-			ttype:  optionTypeString,
-			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.Encoding },
-		},
-		"null_if": {
-			ttype:  optionTypeStringSlice,
-			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.NullIf },
-		},
-	},
-}
-
-type fileFromatID struct {
-	DatabaseName   string
-	SchemaName     string
-	FileFormatName string
-}
-
-// String() takes in a stageID object and returns a pipe-delimited string:
-// DatabaseName|SchemaName|StageName
-func (si *fileFromatID) String() (string, error) {
-	var buf bytes.Buffer
-	csvWriter := csv.NewWriter(&buf)
-	csvWriter.Comma = stageIDDelimiter
-	dataIdentifiers := [][]string{{si.DatabaseName, si.SchemaName, si.FileFormatName}}
-	err := csvWriter.WriteAll(dataIdentifiers)
-	if err != nil {
-		return "", err
-	}
-	strStageID := strings.TrimSpace(buf.String())
-	return strStageID, nil
-}
-
 func FileFormat() *schema.Resource {
 	return &schema.Resource{
 		Create: CreateFileFormat,
@@ -423,29 +353,6 @@ func FileFormat() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 	}
-}
-
-func fileFormatIDFromString(stringID string) (*fileFromatID, error) {
-	reader := csv.NewReader(strings.NewReader(stringID))
-	reader.Comma = '|'
-	lines, err := reader.ReadAll()
-	if err != nil {
-		return nil, fmt.Errorf("Not CSV compatible")
-	}
-
-	if len(lines) != 1 {
-		return nil, fmt.Errorf("1 line per stage")
-	}
-	if len(lines[0]) != 3 {
-		return nil, fmt.Errorf("3 fields allowed")
-	}
-
-	fileFormat := &fileFromatID{
-		DatabaseName:   lines[0][0],
-		SchemaName:     lines[0][1],
-		FileFormatName: lines[0][2],
-	}
-	return fileFormat, nil
 }
 
 func getTypeAndParams(d *schema.ResourceData) (string, map[string]interface{}, error) {
@@ -475,7 +382,7 @@ func CreateFileFormat(d *schema.ResourceData, meta interface{}) error {
 	database := d.Get("database").(string)
 	schema := d.Get("schema").(string)
 
-	ttype, params, err := getTypeAndParams(d)
+	ttype, _, err := getTypeAndParams(d)
 	if err != nil {
 		return err
 	}
@@ -488,24 +395,15 @@ func CreateFileFormat(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	switch ttype {
-	case "json":
-		if v, ok := params["compression"]; ok && v != "" {
-			builder.SetString("compression", v.(string))
-		}
-	case "csv":
-		for _, options := range fileFormatTypeOptions {
-			for name, opt := range options {
-				if v, ok := d.GetOkExists(fmt.Sprintf("csv.0.%s", name)); ok && v != "" { //nolint
-					switch opt.ttype {
-					case optionTypeString:
-						builder.SetString(name, v.(string))
-					case optionTypeBool:
-						builder.SetBool(name, v.(bool))
-					case optionTypeStringSlice:
-						builder.SetStringList(name, v.([]string))
-					}
-				}
+	for name, opt := range snowflake.FileFormatTypeOptions[ttype] {
+		if v, ok := d.GetOkExists(fmt.Sprintf("%s.0.%s", ttype, name)); ok && v != "" { //nolint
+			switch opt.Type {
+			case snowflake.OptionTypeString:
+				builder.SetString(name, v.(string))
+			case snowflake.OptionTypeBool:
+				builder.SetBool(name, v.(bool))
+			case snowflake.OptionTypeStringSlice:
+				builder.SetStringList(name, v.([]string))
 			}
 		}
 	}
@@ -515,7 +413,7 @@ func CreateFileFormat(d *schema.ResourceData, meta interface{}) error {
 		return errors.Wrap(err, "unable to create file format")
 	}
 
-	id := &fileFromatID{
+	id := &fileFormatID{
 		DatabaseName:   database,
 		SchemaName:     schema,
 		FileFormatName: name,
@@ -543,7 +441,7 @@ func ReadFileFormat(d *schema.ResourceData, meta interface{}) error {
 	q := snowflake.FileFormat(stage, dbName, schema).Show()
 	row := snowflake.QueryRow(db, q)
 	if row.Err() == sql.ErrNoRows {
-		// If not found, mark resource to be removed from statefile during apply or refresh
+		// If not found, mark resource to be removed from state during apply or refresh
 		log.Printf("[DEBUG] file format (%s) not found", d.Id())
 		d.SetId("")
 		return nil
@@ -582,18 +480,15 @@ func ReadFileFormat(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	asdf := map[string]interface{}{}
-
-	for n, opt := range fileFormatTypeOptions[strings.ToLower(ff.TType.String)] {
-		if v := opt.reader(ff.ParsedFormatOptions); v != nil {
-			asdf[n] = v
+	data := map[string]interface{}{}
+	for n, opt := range snowflake.FileFormatTypeOptions[strings.ToLower(ff.TType.String)] {
+		if v := opt.Reader(ff.ParsedFormatOptions); v != nil {
+			data[n] = v
 		}
 	}
 
-	a := []map[string]interface{}{asdf}
-
-	log.Printf("[DEBUG] asdf %#v %#v", strings.ToLower(ff.TType.String), a)
-	err = d.Set(strings.ToLower(ff.TType.String), a)
+	fmt.Printf("[DEBUG] XXX %#v\n", data)
+	err = d.Set(strings.ToLower(ff.TType.String), []map[string]interface{}{data})
 	if err != nil {
 		return err
 	}
