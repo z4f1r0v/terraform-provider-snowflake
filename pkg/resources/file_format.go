@@ -158,9 +158,16 @@ var fileFormatSchema = map[string]*schema.Schema{
 					Optional: true,
 					Computed: true,
 				},
-				// TODO
-				//  NULL_IF = ( '<string>' [ , '<string>' ... ] )
-			}},
+				"null_if": {
+					Type:     schema.TypeList,
+					Optional: true,
+					Computed: true,
+					Elem: &schema.Schema{
+						Type: schema.TypeString,
+					},
+				},
+			},
+		},
 	},
 
 	"json": {
@@ -267,9 +274,10 @@ var fileFormatSchema = map[string]*schema.Schema{
 type optionType string
 
 const (
-	optionTypeString = "string"
-	optionTypeBool   = "bool"
-	optionTypeInt    = "int"
+	optionTypeString      = "string"
+	optionTypeBool        = "bool"
+	optionTypeInt         = "int"
+	optionTypeStringSlice = "[]string"
 )
 
 type typeOption struct {
@@ -374,6 +382,10 @@ var fileFormatTypeOptions = map[string]map[string]typeOption{
 		"encoding": {
 			ttype:  optionTypeString,
 			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.Encoding },
+		},
+		"null_if": {
+			ttype:  optionTypeStringSlice,
+			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.NullIf },
 		},
 	},
 }
@@ -490,6 +502,8 @@ func CreateFileFormat(d *schema.ResourceData, meta interface{}) error {
 						builder.SetString(name, v.(string))
 					case optionTypeBool:
 						builder.SetBool(name, v.(bool))
+					case optionTypeStringSlice:
+						builder.SetStringList(name, v.([]string))
 					}
 				}
 			}

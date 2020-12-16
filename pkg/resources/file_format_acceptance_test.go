@@ -34,6 +34,8 @@ func TestAccFileFormat_empty(t *testing.T) {
 			"empty_field_as_null":            "true",
 			"skip_byte_order_mark":           "true",
 			"encoding":                       "UTF8",
+			"null_if.#":                      "1",
+			"null_if.0":                      "\\N",
 		},
 		"json": {
 			"compression": "AUTO",
