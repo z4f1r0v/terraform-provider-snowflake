@@ -3,7 +3,6 @@ package resources_test
 import (
 	"testing"
 
-	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/chanzuckerberg/terraform-provider-snowflake/pkg/provider"
 	"github.com/chanzuckerberg/terraform-provider-snowflake/pkg/resources"
 	"github.com/stretchr/testify/require"
@@ -47,12 +46,12 @@ func TestFileFormat(t *testing.T) {
 // 	})
 // }
 
-func expectReadFileFormat(mock sqlmock.Sqlmock) {
-	rows := sqlmock.NewRows([]string{
-		"created_on", "name", "database_name", "schema_name", "type", "owner", "comment", "format_options"},
-	).AddRow("created_on", "file_format", "database", "schema", "csv", "asdf", "", "")
-	mock.ExpectQuery(`^SHOW FILE FORMATS LIKE 'file_format'$`).WillReturnRows(rows)
-}
+// func expectReadFileFormat(mock sqlmock.Sqlmock) {
+// 	rows := sqlmock.NewRows([]string{
+// 		"created_on", "name", "database_name", "schema_name", "type", "owner", "comment", "format_options"},
+// 	).AddRow("created_on", "file_format", "database", "schema", "csv", "asdf", "", "")
+// 	mock.ExpectQuery(`^SHOW FILE FORMATS LIKE 'file_format'$`).WillReturnRows(rows)
+// }
 
 // func TestFileFormat_read(t *testing.T) {
 // 	r := require.New(t)

@@ -124,7 +124,7 @@ func ScanFileFormat(row *sqlx.Row) (*fileFormat, error) {
 		return nil, err
 	}
 	f.ParsedFormatOptions = &FileFormatOptions{}
-
+	fmt.Printf("[DEBUG] ZZZ parsed options %#v \n", f.FormatOptions.String)
 	err = json.Unmarshal([]byte(f.FormatOptions.String), f.ParsedFormatOptions)
 
 	return f, err

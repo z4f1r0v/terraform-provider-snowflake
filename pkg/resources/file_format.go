@@ -94,21 +94,72 @@ var fileFormatSchema = map[string]*schema.Schema{
 					Computed: true,
 				},
 
-				//  DATE_FORMAT = '<string>' | AUTO
-				//  TIME_FORMAT = '<string>' | AUTO
-				//  TIMESTAMP_FORMAT = '<string>' | AUTO
-				//  BINARY_FORMAT = HEX | BASE64 | UTF8
-				//  ESCAPE = '<character>' | NONE
-				//  ESCAPE_UNENCLOSED_FIELD = '<character>' | NONE
-				//  TRIM_SPACE = TRUE | FALSE
-				//  FIELD_OPTIONALLY_ENCLOSED_BY = '<character>' | NONE
+				"time_format": {
+					Type:     schema.TypeString,
+					Optional: true,
+					Computed: true,
+				},
+				"timestamp_format": {
+					Type:     schema.TypeString,
+					Optional: true,
+					Computed: true,
+				},
+				"binary_format": {
+					Type:         schema.TypeString,
+					Optional:     true,
+					Computed:     true,
+					ValidateFunc: validation.StringInSlice([]string{"HEX", "BASE64", "UTF8"}, true),
+				},
+				"escape": {
+					Type:         schema.TypeString,
+					Optional:     true,
+					Computed:     true,
+					ValidateFunc: validation.StringLenBetween(1, 1),
+				},
+				"escape_unenclosed_field": {
+					Type:         schema.TypeString,
+					Optional:     true,
+					Computed:     true,
+					ValidateFunc: validation.StringLenBetween(1, 1),
+				},
+				"field_optionally_enclosed_by": {
+					Type:         schema.TypeString,
+					Optional:     true,
+					Computed:     true,
+					ValidateFunc: validation.StringLenBetween(1, 1),
+				},
+				"error_on_column_count_mismatch": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Computed: true,
+				},
+				"replace_invalid_characters": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Computed: true,
+				},
+				"validate_utf8": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Computed: true,
+				},
+				"empty_field_as_null": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Computed: true,
+				},
+				"skip_byte_order_mark": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Computed: true,
+				},
+				"encoding": {
+					Type:     schema.TypeString,
+					Optional: true,
+					Computed: true,
+				},
+				// TODO
 				//  NULL_IF = ( '<string>' [ , '<string>' ... ] )
-				//  ERROR_ON_COLUMN_COUNT_MISMATCH = TRUE | FALSE
-				//  REPLACE_INVALID_CHARACTERS = TRUE | FALSE
-				//  VALIDATE_UTF8 = TRUE | FALSE
-				//  EMPTY_FIELD_AS_NULL = TRUE | FALSE
-				//  SKIP_BYTE_ORDER_MARK = TRUE | FALSE
-				//  ENCODING = '<string>' | UTF8
 			}},
 	},
 
@@ -261,6 +312,69 @@ var fileFormatTypeOptions = map[string]map[string]typeOption{
 			ttype:  optionTypeString,
 			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.DateFormat },
 		},
+		"time_format": {
+			ttype:  optionTypeString,
+			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.TimeFormat },
+		},
+		"timestamp_format": {
+			ttype:  optionTypeString,
+			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.TimestampFormat },
+		},
+		"binary_format": {
+			ttype:  optionTypeString,
+			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.BinaryFormat },
+		},
+		"escape": {
+			ttype: optionTypeString,
+			reader: func(o *snowflake.FileFormatOptions) interface{} {
+				t := o.Escape
+				if t != nil && *t == "NONE" {
+					return nil
+				}
+				return t
+			},
+		},
+		"escape_unenclosed_field": {
+			ttype:  optionTypeString,
+			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.EscapeUnenclosedField },
+		},
+		"field_optionally_enclosed_by": {
+			ttype: optionTypeString,
+			reader: func(o *snowflake.FileFormatOptions) interface{} {
+				t := o.FieldOptionallyEnclosedBy
+				if t != nil && *t == "NONE" {
+					return nil
+				}
+				return t
+			},
+		},
+		"error_on_column_count_mismatch": {
+			ttype:  optionTypeBool,
+			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.ErrorOnColumnCountMismatch },
+		},
+		"replace_invalid_characters": {
+			ttype:  optionTypeBool,
+			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.ReplaceInvalidCharacters },
+		},
+		"validate_utf8": {
+			ttype: optionTypeBool,
+			reader: func(o *snowflake.FileFormatOptions) interface{} {
+				fmt.Printf("[DEBUG] YYY utf8 %#v \n", *o.ValidateUtf8)
+				return o.ValidateUtf8
+			},
+		},
+		"empty_field_as_null": {
+			ttype:  optionTypeBool,
+			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.EmptyFieldAsNull },
+		},
+		"skip_byte_order_mark": {
+			ttype:  optionTypeBool,
+			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.SkipByteOrderMark },
+		},
+		"encoding": {
+			ttype:  optionTypeString,
+			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.Encoding },
+		},
 	},
 }
 
@@ -335,7 +449,7 @@ func getTypeAndParams(d *schema.ResourceData) (string, map[string]interface{}, e
 	for _, ttype := range types {
 		if v, ok := d.GetOkExists(ttype); ok { //nolint
 			t := v.(*schema.Set)
-			log.Printf("[DEBUG] %#v", t)
+			log.Printf("[DEBUG] %#v\n", t)
 			return ttype, t.List()[0].(map[string]interface{}), nil
 		}
 	}
@@ -350,7 +464,6 @@ func CreateFileFormat(d *schema.ResourceData, meta interface{}) error {
 	schema := d.Get("schema").(string)
 
 	ttype, params, err := getTypeAndParams(d)
-	log.Printf("[DEBUG] params %#v", params)
 	if err != nil {
 		return err
 	}
@@ -371,10 +484,12 @@ func CreateFileFormat(d *schema.ResourceData, meta interface{}) error {
 	case "csv":
 		for _, options := range fileFormatTypeOptions {
 			for name, opt := range options {
-				if v, ok := params[name]; ok && v != "" {
+				if v, ok := d.GetOkExists(fmt.Sprintf("csv.0.%s", name)); ok && v != "" { //nolint
 					switch opt.ttype {
 					case optionTypeString:
 						builder.SetString(name, v.(string))
+					case optionTypeBool:
+						builder.SetBool(name, v.(bool))
 					}
 				}
 			}
