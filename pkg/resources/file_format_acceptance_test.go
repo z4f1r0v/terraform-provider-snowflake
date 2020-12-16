@@ -21,6 +21,7 @@ func TestAccFileFormat_empty(t *testing.T) {
 			"file_extension":   "",
 			"skip_header":      "0",
 			"skip_blank_lines": "false",
+			"date_format":      "AUTO",
 		},
 		"json": {
 			"compression": "AUTO",

@@ -88,9 +88,12 @@ var fileFormatSchema = map[string]*schema.Schema{
 					Optional: true,
 					Computed: true,
 				},
+				"date_format": {
+					Type:     schema.TypeString,
+					Optional: true,
+					Computed: true,
+				},
 
-				//  SKIP_HEADER = <integer>
-				//  SKIP_BLANK_LINES = TRUE | FALSE
 				//  DATE_FORMAT = '<string>' | AUTO
 				//  TIME_FORMAT = '<string>' | AUTO
 				//  TIMESTAMP_FORMAT = '<string>' | AUTO
@@ -254,6 +257,10 @@ var fileFormatTypeOptions = map[string]map[string]typeOption{
 			ttype:  optionTypeBool,
 			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.SkipBlankLines },
 		},
+		"date_format": {
+			ttype:  optionTypeString,
+			reader: func(o *snowflake.FileFormatOptions) interface{} { return o.DateFormat },
+		},
 	},
 }
 
@@ -326,7 +333,7 @@ func getTypeAndParams(d *schema.ResourceData) (string, map[string]interface{}, e
 	}
 
 	for _, ttype := range types {
-		if v, ok := d.GetOkExists(ttype); ok {
+		if v, ok := d.GetOkExists(ttype); ok { //nolint
 			t := v.(*schema.Set)
 			log.Printf("[DEBUG] %#v", t)
 			return ttype, t.List()[0].(map[string]interface{}), nil
