@@ -62,6 +62,8 @@ func TestAccFileFormat_empty(t *testing.T) {
 		},
 		"orc": {
 			"trim_space": "false",
+			// docs say default should be same as csv above, but that's not observed
+			"null_if.#": "0",
 		},
 		"parquet": {
 			"compression": "AUTO",

@@ -278,6 +278,16 @@ var FileFormatTypeOptions = map[string]map[string]TypeFileFormatOption{
 			Reader: func(o *FileFormatOptions) interface{} { return o.TrimSpace },
 		},
 	},
+	"orc": {
+		"trim_space": {
+			Type:   OptionTypeBool,
+			Reader: func(o *FileFormatOptions) interface{} { return o.TrimSpace },
+		},
+		"null_if": {
+			Type:   OptionTypeStringSlice,
+			Reader: func(o *FileFormatOptions) interface{} { return o.NullIf },
+		},
+	},
 }
 
 type FileFormatOptions struct {
