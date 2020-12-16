@@ -38,12 +38,13 @@ func TestAccFileFormat_empty(t *testing.T) {
 			"null_if.0":                      "\\N",
 		},
 		"json": {
-			"compression":                "AUTO",
-			"trim_space":                 "false",
-			"date_format":                "AUTO",
-			"time_format":                "AUTO",
-			"timestamp_format":           "AUTO",
-			"binary_format":              "HEX",
+			"compression":      "AUTO",
+			"trim_space":       "false",
+			"date_format":      "AUTO",
+			"time_format":      "AUTO",
+			"timestamp_format": "AUTO",
+			"binary_format":    "HEX",
+			// docs say default should be same as csv above, but that's not observed
 			"null_if.#":                  "0",
 			"replace_invalid_characters": "false",
 			"skip_byte_order_mark":       "true",
@@ -56,6 +57,8 @@ func TestAccFileFormat_empty(t *testing.T) {
 		"avro": {
 			"compression": "AUTO",
 			"trim_space":  "false",
+			// docs say default should be same as csv above, but that's not observed
+			"null_if.#": "0",
 		},
 		"orc": {
 			"trim_space": "false",

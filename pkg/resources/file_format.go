@@ -278,6 +278,14 @@ var fileFormatSchema = map[string]*schema.Schema{
 					Optional: true,
 					Computed: true,
 				},
+				"null_if": {
+					Type:     schema.TypeList,
+					Optional: true,
+					Computed: true,
+					Elem: &schema.Schema{
+						Type: schema.TypeString,
+					},
+				},
 			},
 		},
 	},

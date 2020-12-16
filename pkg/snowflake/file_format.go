@@ -259,6 +259,24 @@ var FileFormatTypeOptions = map[string]map[string]TypeFileFormatOption{
 			Type:   OptionTypeBool,
 			Reader: func(o *FileFormatOptions) interface{} { return o.IgnoreUtf8Errors },
 		},
+		"trim_space": {
+			Type:   OptionTypeBool,
+			Reader: func(o *FileFormatOptions) interface{} { return o.TrimSpace },
+		},
+	},
+	"avro": {
+		"null_if": {
+			Type:   OptionTypeStringSlice,
+			Reader: func(o *FileFormatOptions) interface{} { return o.NullIf },
+		},
+		"compression": {
+			Type:   OptionTypeString,
+			Reader: func(o *FileFormatOptions) interface{} { return o.Compression },
+		},
+		"trim_space": {
+			Type:   OptionTypeBool,
+			Reader: func(o *FileFormatOptions) interface{} { return o.TrimSpace },
+		},
 	},
 }
 
