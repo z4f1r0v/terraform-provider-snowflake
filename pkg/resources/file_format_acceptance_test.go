@@ -107,9 +107,12 @@ func TestAccFileFormat_empty(t *testing.T) {
 							resource.ComposeTestCheckFunc(checks...),
 						),
 					},
-					// RENAME
-					// CHANGE PROPERTIES
 					// IMPORT
+					{
+						ResourceName:      "snowflake_file_format.ff",
+						ImportState:       true,
+						ImportStateVerify: true,
+					},
 				},
 			})
 		})

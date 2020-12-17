@@ -17,7 +17,7 @@ var fileFormatProperties = []string{
 	"comment",
 }
 
-func debugf(msg string, params ...interface{}) {
+func debugf(msg string, params ...interface{}) { //nolint
 	fmt.Printf("[DEBUG] %#v %#v\n", msg, params)
 }
 
@@ -25,11 +25,13 @@ var fileFormatSchema = map[string]*schema.Schema{
 	"database": {
 		Type:        schema.TypeString,
 		Required:    true,
+		ForceNew:    true,
 		Description: "Name of the file format.",
 	},
 	"schema": {
 		Type:        schema.TypeString,
 		Required:    true,
+		ForceNew:    true,
 		Description: "Name of the file format.",
 	},
 	"name": {
@@ -43,6 +45,7 @@ var fileFormatSchema = map[string]*schema.Schema{
 	},
 	"type": {
 		Type:     schema.TypeString,
+		ForceNew: true,
 		Computed: true,
 	},
 
