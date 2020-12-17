@@ -88,10 +88,7 @@ func TestAccFileFormat_defaults(t *testing.T) {
 
 	for ttype, params := range types {
 		t.Run(ttype, func(t *testing.T) {
-			db := strings.ToUpper(acctest.RandStringFromCharSet(10, acctest.CharSetAlpha))
-			schema := strings.ToUpper(acctest.RandStringFromCharSet(10, acctest.CharSetAlpha))
-			name := strings.ToUpper(acctest.RandStringFromCharSet(10, acctest.CharSetAlpha))
-
+			db, schema, name := names()
 			checks := []resource.TestCheckFunc{}
 
 			for k, v := range params {
@@ -122,16 +119,16 @@ func TestAccFileFormat_defaults(t *testing.T) {
 }
 
 func TestAccFileFormat_changeType(t *testing.T) {
-	name := strings.ToUpper(acctest.RandStringFromCharSet(10, acctest.CharSetAlpha))
+	db, schema, name := names()
 
 	resource.ParallelTest(t, resource.TestCase{
 		Providers: providers(),
 		Steps: []resource.TestStep{
 			{
-				Config: ffConfig(name, name, name, "csv"),
+				Config: ffConfig(db, schema, name, "csv"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("snowflake_database.d", "name", name),
-					resource.TestCheckResourceAttr("snowflake_schema.s", "name", name),
+					resource.TestCheckResourceAttr("snowflake_database.d", "name", db),
+					resource.TestCheckResourceAttr("snowflake_schema.s", "name", schema),
 					resource.TestCheckResourceAttr("snowflake_file_format.ff", "type", strings.ToUpper("csv")),
 				),
 			},
@@ -144,9 +141,8 @@ func TestAccFileFormat_changeType(t *testing.T) {
 }
 
 func TestAccFileFormat_rename(t *testing.T) {
-	db := strings.ToUpper(acctest.RandStringFromCharSet(10, acctest.CharSetAlpha))
-	schema := strings.ToUpper(acctest.RandStringFromCharSet(10, acctest.CharSetAlpha))
-	name := strings.ToUpper(acctest.RandStringFromCharSet(10, acctest.CharSetAlpha))
+	db, schema, name := names()
+	name2 := strings.ToUpper(acctest.RandStringFromCharSet(10, acctest.CharSetAlpha))
 
 	resource.ParallelTest(t, resource.TestCase{
 		Providers: providers(),
@@ -160,8 +156,25 @@ func TestAccFileFormat_rename(t *testing.T) {
 					resource.TestCheckResourceAttr("snowflake_file_format.ff", "type", strings.ToUpper("csv")),
 				),
 			},
+			{
+				Config: ffConfig(db, schema, name2, "csv"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("snowflake_database.d", "name", db),
+					resource.TestCheckResourceAttr("snowflake_schema.s", "name", schema),
+					resource.TestCheckResourceAttr("snowflake_file_format.ff", "name", name2),
+					resource.TestCheckResourceAttr("snowflake_file_format.ff", "type", strings.ToUpper("csv")),
+				),
+			},
 		},
 	})
+}
+
+func names() (string, string, string) {
+	db := strings.ToUpper(acctest.RandStringFromCharSet(10, acctest.CharSetAlpha))
+	schema := strings.ToUpper(acctest.RandStringFromCharSet(10, acctest.CharSetAlpha))
+	name := strings.ToUpper(acctest.RandStringFromCharSet(10, acctest.CharSetAlpha))
+
+	return db, schema, name
 }
 
 func ffConfig(db, schema, name, ttype string) string {

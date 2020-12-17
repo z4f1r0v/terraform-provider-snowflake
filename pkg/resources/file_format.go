@@ -575,21 +575,32 @@ func ReadFileFormat(d *schema.ResourceData, meta interface{}) error {
 }
 
 func UpdateFileFormat(d *schema.ResourceData, meta interface{}) error {
-	// db := meta.(*sql.DB)
-	// name := d.Get("name").(string)
-	// database := d.Get("database").(string)
-	// schema := d.Get("schema").(string)
+	db := meta.(*sql.DB)
+	database := d.Get("database").(string)
+	schema := d.Get("schema").(string)
+	name := d.Get("name").(string)
 
 	changes := 0
 	for _, t := range fileFormatFormatTypes {
 		if d.HasChange(t) {
 			changes += 1
 		}
-	}
-	debugf("changes", changes)
 
+	}
 	if changes > 1 {
 		return errors.New("cannot change format type")
+	}
+
+	builder := snowflake.FileFormat(database, schema, name)
+
+	if d.HasChange("name") {
+		_, n := d.GetChange("name")
+		new := n.(string)
+
+		err := snowflake.Exec(db, builder.Rename(new))
+		if err != nil {
+			return errors.Wrap(err, "unable to rename file format")
+		}
 	}
 
 	return nil
