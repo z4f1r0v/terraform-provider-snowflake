@@ -26,7 +26,7 @@ type FileFormatBuilder struct {
 
 func (b FileFormatBuilder) Show() string {
 	return fmt.Sprintf(
-		`SHOW FILE FORMATS LIKE '%s' in SCHEMA %s.%s`, b.name, b.database, b.schema)
+		`SHOW FILE FORMATS LIKE '%s' in SCHEMA "%s"."%s"`, b.name, b.database, b.schema)
 }
 
 // QualifiedName prepends the db and schema if set and escapes everything nicely

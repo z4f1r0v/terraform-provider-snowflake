@@ -18,7 +18,7 @@ func TestFileFormatShow(t *testing.T) {
 
 	ff := builder(r)
 
-	r.Equal(`SHOW FILE FORMATS LIKE 'ff' in SCHEMA db.schema`, ff.Show())
+	r.Equal(`SHOW FILE FORMATS LIKE 'ff' in SCHEMA "db"."schema"`, ff.Show())
 }
 
 func TestFileFormatCreate(t *testing.T) {

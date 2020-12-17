@@ -515,9 +515,9 @@ func ReadFileFormat(d *schema.ResourceData, meta interface{}) error {
 
 	dbName := stageID.DatabaseName
 	schema := stageID.SchemaName
-	stage := stageID.StageName
+	name := stageID.StageName
 
-	q := snowflake.FileFormat(stage, dbName, schema).Show()
+	q := snowflake.FileFormat(dbName, schema, name).Show()
 	row := snowflake.QueryRow(db, q)
 	if row.Err() == sql.ErrNoRows {
 		// If not found, mark resource to be removed from state during apply or refresh
