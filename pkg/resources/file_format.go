@@ -12,6 +12,15 @@ import (
 	"github.com/pkg/errors"
 )
 
+var fileFormatFormatTypes = []string{
+	"csv",
+	"json",
+	"avro",
+	"orc",
+	"parquet",
+	"xml",
+}
+
 var fileFormatProperties = []string{
 	"type",
 	"comment",
@@ -566,7 +575,24 @@ func ReadFileFormat(d *schema.ResourceData, meta interface{}) error {
 }
 
 func UpdateFileFormat(d *schema.ResourceData, meta interface{}) error {
-	return errors.New("not implemented")
+	// db := meta.(*sql.DB)
+	// name := d.Get("name").(string)
+	// database := d.Get("database").(string)
+	// schema := d.Get("schema").(string)
+
+	changes := 0
+	for _, t := range fileFormatFormatTypes {
+		if d.HasChange(t) {
+			changes += 1
+		}
+	}
+	debugf("changes", changes)
+
+	if changes > 1 {
+		return errors.New("cannot change format type")
+	}
+
+	return nil
 }
 
 func DeleteFileFormat(d *schema.ResourceData, meta interface{}) error {

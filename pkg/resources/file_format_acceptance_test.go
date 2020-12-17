@@ -3,6 +3,7 @@ package resources_test
 import (
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -10,8 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-// TODO test for errors handling when trying to change type
-func TestAccFileFormat_empty(t *testing.T) {
+func TestAccFileFormat_defaults(t *testing.T) {
 	types := map[string]map[string]string{
 		"csv": {
 			"compression":                    "AUTO",
@@ -117,6 +117,28 @@ func TestAccFileFormat_empty(t *testing.T) {
 			})
 		})
 	}
+}
+
+func TestAccFileFormat_changeType(t *testing.T) {
+	name := strings.ToUpper(acctest.RandStringFromCharSet(10, acctest.CharSetAlpha))
+
+	resource.ParallelTest(t, resource.TestCase{
+		Providers: providers(),
+		Steps: []resource.TestStep{
+			{
+				Config: ffConfig(name, "csv"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("snowflake_database.d", "name", name),
+					resource.TestCheckResourceAttr("snowflake_schema.s", "name", name),
+					resource.TestCheckResourceAttr("snowflake_file_format.ff", "type", strings.ToUpper("csv")),
+				),
+			},
+			{
+				Config:      ffConfig(name, "json"),
+				ExpectError: regexp.MustCompile("cannot change format type"),
+			},
+		},
+	})
 }
 
 func ffConfig(name, ttype string) string {
