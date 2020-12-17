@@ -325,11 +325,25 @@ var fileFormatSchema = map[string]*schema.Schema{
 					Type:     schema.TypeString,
 					Optional: true,
 					Computed: true,
+					// = AUTO | LZO | SNAPPY | NONE
 				},
 				"trim_space": {
 					Type:     schema.TypeBool,
 					Optional: true,
 					Computed: true,
+				},
+				"binary_as_text": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Computed: true,
+				},
+				"null_if": {
+					Type:     schema.TypeList,
+					Optional: true,
+					Computed: true,
+					Elem: &schema.Schema{
+						Type: schema.TypeString,
+					},
 				},
 			},
 		},
@@ -346,8 +360,47 @@ var fileFormatSchema = map[string]*schema.Schema{
 					Type:     schema.TypeString,
 					Optional: true,
 					Computed: true,
+					// COMPRESSION = AUTO | GZIP | BZ2 | BROTLI | ZSTD | DEFLATE | RAW_DEFLATE | NONE
 				},
 				"trim_space": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Computed: true,
+				},
+				"ignore_utf8_errors": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Computed: true,
+				},
+				"null_if": {
+					Type:     schema.TypeList,
+					Optional: true,
+					Computed: true,
+					Elem: &schema.Schema{
+						Type: schema.TypeString,
+					},
+				},
+				"skip_byte_order_mark": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Computed: true,
+				},
+				"preserve_space": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Computed: true,
+				},
+				"strip_outer_element": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Computed: true,
+				},
+				"disable_snowflake_data": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Computed: true,
+				},
+				"disable_auto_convert": {
 					Type:     schema.TypeBool,
 					Optional: true,
 					Computed: true,

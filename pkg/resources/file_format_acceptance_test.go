@@ -66,12 +66,23 @@ func TestAccFileFormat_empty(t *testing.T) {
 			"null_if.#": "0",
 		},
 		"parquet": {
-			"compression": "AUTO",
-			"trim_space":  "false",
+			"compression":    "AUTO",
+			"trim_space":     "false",
+			"binary_as_text": "true",
+			// docs say default should be same as csv above, but that's not observed
+			"null_if.#": "0",
 		},
 		"xml": {
-			"compression": "AUTO",
-			"trim_space":  "false",
+			"compression":        "AUTO",
+			"trim_space":         "false",
+			"ignore_utf8_errors": "false",
+			// docs say default should be same as csv above, but that's not observed
+			"null_if.#":              "0",
+			"skip_byte_order_mark":   "true",
+			"preserve_space":         "false",
+			"strip_outer_element":    "false",
+			"disable_snowflake_data": "false",
+			"disable_auto_convert":   "false",
 		},
 	}
 

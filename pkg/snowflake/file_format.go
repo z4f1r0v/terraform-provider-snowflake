@@ -288,6 +288,62 @@ var FileFormatTypeOptions = map[string]map[string]TypeFileFormatOption{
 			Reader: func(o *FileFormatOptions) interface{} { return o.NullIf },
 		},
 	},
+	"parquet": {
+		"compression": {
+			Type:   OptionTypeString,
+			Reader: func(o *FileFormatOptions) interface{} { return o.Compression },
+		},
+		"trim_space": {
+			Type:   OptionTypeBool,
+			Reader: func(o *FileFormatOptions) interface{} { return o.TrimSpace },
+		},
+		"binary_as_text": {
+			Type:   OptionTypeBool,
+			Reader: func(o *FileFormatOptions) interface{} { return o.BinaryAsText },
+		},
+		"null_if": {
+			Type:   OptionTypeStringSlice,
+			Reader: func(o *FileFormatOptions) interface{} { return o.NullIf },
+		},
+	},
+	"xml": {
+		"compression": {
+			Type:   OptionTypeString,
+			Reader: func(o *FileFormatOptions) interface{} { return o.Compression },
+		},
+		"trim_space": {
+			Type:   OptionTypeBool,
+			Reader: func(o *FileFormatOptions) interface{} { return o.TrimSpace },
+		},
+		"ignore_utf8_errors": {
+			Type:   OptionTypeBool,
+			Reader: func(o *FileFormatOptions) interface{} { return o.IgnoreUtf8Errors },
+		},
+		"null_if": {
+			Type:   OptionTypeStringSlice,
+			Reader: func(o *FileFormatOptions) interface{} { return o.NullIf },
+		},
+		"skip_byte_order_mark": {
+			Type:   OptionTypeBool,
+			Reader: func(o *FileFormatOptions) interface{} { return o.SkipByteOrderMark },
+		},
+		"preserve_space": {
+			Type:   OptionTypeBool,
+			Reader: func(o *FileFormatOptions) interface{} { return o.PreserveSpace },
+		},
+		"strip_outer_element": {
+			Type:   OptionTypeBool,
+			Reader: func(o *FileFormatOptions) interface{} { return o.StripOuterElement },
+		},
+		"disable_snowflake_data": {
+			Type:   OptionTypeBool,
+			Reader: func(o *FileFormatOptions) interface{} { return o.DisableSnowflakeData },
+		},
+		"disable_auto_convert": {
+			Type:   OptionTypeBool,
+			Reader: func(o *FileFormatOptions) interface{} { return o.DisableAutoConvert },
+		},
+	},
 }
 
 type FileFormatOptions struct {
@@ -317,6 +373,11 @@ type FileFormatOptions struct {
 	StripOuterArray            *bool    `json:"STRIP_OUTER_ARRAY"`
 	StripNullValues            *bool    `json:"STRIP_NULL_VALUES"`
 	IgnoreUtf8Errors           *bool    `json:"IGNORE_UTF8_ERRORS"`
+	BinaryAsText               *bool    `json:"BINARY_AS_TEXT"`
+	PreserveSpace              *bool    `json:"PRESERVE_SPACE"`
+	StripOuterElement          *bool    `json:"STRIP_OUTER_ELEMENT"`
+	DisableSnowflakeData       *bool    `json:"DISABLE_SNOWFLAKE_DATA"`
+	DisableAutoConvert         *bool    `json:"DISABLE_AUTO_CONVERT"`
 }
 
 type fileFormat struct {
