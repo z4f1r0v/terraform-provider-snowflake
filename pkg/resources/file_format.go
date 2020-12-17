@@ -424,7 +424,7 @@ func FileFormat() *schema.Resource {
 	}
 }
 
-func getTypeAndParams(d *schema.ResourceData) (string, map[string]interface{}, error) {
+func getFormatType(d *schema.ResourceData) (string, error) {
 	types := []string{
 		"csv",
 		"json",
@@ -435,14 +435,12 @@ func getTypeAndParams(d *schema.ResourceData) (string, map[string]interface{}, e
 	}
 
 	for _, ttype := range types {
-		if v, ok := d.GetOkExists(ttype); ok { //nolint
-			t := v.(*schema.Set)
-			log.Printf("[DEBUG] %#v\n", t)
-			return ttype, t.List()[0].(map[string]interface{}), nil
+		if _, ok := d.GetOkExists(ttype); ok { //nolint
+			return ttype, nil
 		}
 	}
 
-	return "", nil, errors.New("could not extract file format parameters")
+	return "", errors.New("could not extract file format parameters")
 }
 
 func CreateFileFormat(d *schema.ResourceData, meta interface{}) error {
@@ -451,7 +449,7 @@ func CreateFileFormat(d *schema.ResourceData, meta interface{}) error {
 	database := d.Get("database").(string)
 	schema := d.Get("schema").(string)
 
-	ttype, _, err := getTypeAndParams(d)
+	ttype, err := getFormatType(d)
 	if err != nil {
 		return err
 	}
@@ -556,7 +554,6 @@ func ReadFileFormat(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	fmt.Printf("[DEBUG] XXX %#v\n", data)
 	err = d.Set(strings.ToLower(ff.TType.String), []map[string]interface{}{data})
 	if err != nil {
 		return err
