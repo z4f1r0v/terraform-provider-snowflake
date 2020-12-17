@@ -57,6 +57,8 @@ func (b FileFormatBuilder) QualifiedName() string {
 func (b FileFormatBuilder) builder() *Builder {
 	return &Builder{
 		entityType:    FileFormatType,
+		databaseName:  &b.database,
+		schemaName:    &b.schema,
 		name:          b.QualifiedName(),
 		qualifiedName: true,
 	}

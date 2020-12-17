@@ -24,12 +24,23 @@ const (
 
 type Builder struct {
 	entityType    EntityType
+	databaseName  *string
+	schemaName    *string
 	name          string
 	qualifiedName bool
 }
 
 func (b *Builder) Show() string {
-	return fmt.Sprintf(`SHOW %sS LIKE '%s'`, b.entityType, b.name)
+	var sb strings.Builder
+
+	sb.WriteString(fmt.Sprintf(`SHOW %sS LIKE '%s'`, b.entityType, b.name))
+	if b.databaseName != nil {
+		sb.WriteString(fmt.Sprintf(" IN DATABASE %s", *b.databaseName))
+	}
+	if b.schemaName != nil {
+		sb.WriteString(fmt.Sprintf(" IN SCHEMA %s", *b.schemaName))
+	}
+	return sb.String()
 }
 
 func (b *Builder) Describe() string {
