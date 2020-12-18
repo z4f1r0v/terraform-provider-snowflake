@@ -447,7 +447,7 @@ func getFormatType(d *schema.ResourceData) (string, error) {
 	}
 
 	for _, ttype := range types {
-		if _, ok := d.GetOkExists(ttype); ok { //nolint
+		if v, ok := d.GetOkExists(ttype); ok && len(v.(*schema.Set).List()) > 0 { //nolint
 			return ttype, nil
 		}
 	}
@@ -508,14 +508,14 @@ func CreateFileFormat(d *schema.ResourceData, meta interface{}) error {
 
 func ReadFileFormat(d *schema.ResourceData, meta interface{}) error {
 	db := meta.(*sql.DB)
-	stageID, err := stageIDFromString(d.Id())
+	ffID, err := fileFormatIDFromString(d.Id())
 	if err != nil {
 		return err
 	}
 
-	dbName := stageID.DatabaseName
-	schema := stageID.SchemaName
-	name := stageID.StageName
+	dbName := ffID.DatabaseName
+	schema := ffID.SchemaName
+	name := ffID.FileFormatName
 
 	q := snowflake.FileFormat(dbName, schema, name).Show()
 	row := snowflake.QueryRow(db, q)
@@ -577,8 +577,13 @@ func ReadFileFormat(d *schema.ResourceData, meta interface{}) error {
 func UpdateFileFormat(d *schema.ResourceData, meta interface{}) error {
 	db := meta.(*sql.DB)
 	database := d.Get("database").(string)
-	schema := d.Get("schema").(string)
+	schemaName := d.Get("schema").(string)
 	name := d.Get("name").(string)
+
+	ffID, err := fileFormatIDFromString(d.Id())
+	if err != nil {
+		return err
+	}
 
 	changes := 0
 	for _, t := range fileFormatFormatTypes {
@@ -591,19 +596,71 @@ func UpdateFileFormat(d *schema.ResourceData, meta interface{}) error {
 		return errors.New("cannot change format type")
 	}
 
-	builder := snowflake.FileFormat(database, schema, name)
-
 	if d.HasChange("name") {
-		_, n := d.GetChange("name")
+		o, n := d.GetChange("name")
+		old := o.(string)
 		new := n.(string)
+		builder := snowflake.FileFormat(database, schemaName, old)
 
 		err := snowflake.Exec(db, builder.Rename(new))
 		if err != nil {
 			return errors.Wrap(err, "unable to rename file format")
 		}
+
+		ffID.FileFormatName = new
+
+		id, err := ffID.String()
+		if err != nil {
+			return errors.Wrap(err, "unable to generate new file format id")
+		}
+		d.SetId(id)
 	}
 
-	return nil
+	ttype, err := getFormatType(d)
+	if err != nil {
+		return err
+	}
+
+	if d.HasChange(ttype) {
+		before, after := d.GetChange(ttype)
+		b := before.(*schema.Set).List()[0].(map[string]interface{})
+		a := after.(*schema.Set).List()[0].(map[string]interface{})
+
+		hasChange := false
+		alter := snowflake.FileFormat(database, schemaName, name).Alter()
+		for name, opt := range snowflake.FileFormatTypeOptions[ttype] {
+
+			switch opt.Type {
+			case snowflake.OptionTypeString:
+				if b[name].(string) != a[name].(string) {
+					hasChange = true
+					alter.SetString(name, a[name].(string))
+				}
+			case snowflake.OptionTypeBool:
+				if b[name].(bool) != a[name].(bool) {
+					hasChange = true
+
+					alter.SetBool(name, a[name].(bool))
+				}
+			case snowflake.OptionTypeStringSlice:
+				// TODO
+				// if b[name].([]string) != a[name].([]string) {
+				// 	debugf("has change")
+				// 	hasChange = true
+
+				// 	alter.SetStringList(name, a[name].([]string))
+				// }
+			}
+		}
+		if hasChange {
+			err := snowflake.Exec(db, alter.Statement())
+			if err != nil {
+				return errors.Wrap(err, "error altering")
+			}
+		}
+	}
+
+	return ReadFileFormat(d, meta)
 }
 
 func DeleteFileFormat(d *schema.ResourceData, meta interface{}) error {
