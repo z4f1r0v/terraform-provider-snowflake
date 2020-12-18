@@ -313,10 +313,10 @@ var FileFormatTypeOptions = map[string]map[string]TypeFileFormatOption{
 			Type:   OptionTypeString,
 			Reader: func(o *FileFormatOptions) interface{} { return o.Compression },
 		},
-		"trim_space": {
-			Type:   OptionTypeBool,
-			Reader: func(o *FileFormatOptions) interface{} { return o.TrimSpace },
-		},
+		// "trim_space": {
+		// 	Type:   OptionTypeBool,
+		// 	Reader: func(o *FileFormatOptions) interface{} { return o.TrimSpace },
+		// },
 		"ignore_utf8_errors": {
 			Type:   OptionTypeBool,
 			Reader: func(o *FileFormatOptions) interface{} { return o.IgnoreUtf8Errors },

@@ -220,12 +220,22 @@ func TestAccFileFormat_update(t *testing.T) {
 		// 	"strip_null_values":          "false",
 		// 	"ignore_utf8_errors":         "false",
 		// },
-		// "avro": {
-		// 	"compression": "AUTO",
-		// 	"trim_space":  "false",
-		// 	// docs say default should be same as csv above, but that's not observed
-		// 	"null_if.#": "0",
-		// },
+		"avro": {
+			before: map[string]interface{}{
+				"compression": "AUTO",
+				"trim_space":  false,
+				// TODO
+				// docs say default should be same as csv above, but that's not observed
+				// "null_if.#": "0",
+			},
+			after: map[string]interface{}{
+				"compression": "GZIP",
+				"trim_space":  true,
+				// TODO
+				// docs say default should be same as csv above, but that's not observed
+				// "null_if.#": "0",
+			},
+		},
 		"orc": {
 			before: map[string]interface{}{
 				"trim_space": false,
@@ -233,28 +243,49 @@ func TestAccFileFormat_update(t *testing.T) {
 			after: map[string]interface{}{
 				"trim_space": true,
 			},
-			// docs say default should be same as csv above, but that's not observed
+			// TODO
 			// "null_if.#": "0",
 		},
-		// "parquet": {
-		// 	"compression":    "AUTO",
-		// 	"trim_space":     "false",
-		// 	"binary_as_text": "true",
-		// 	// docs say default should be same as csv above, but that's not observed
-		// 	"null_if.#": "0",
-		// },
-		// "xml": {
-		// 	"compression":        "AUTO",
-		// 	"trim_space":         "false",
-		// 	"ignore_utf8_errors": "false",
-		// 	// docs say default should be same as csv above, but that's not observed
-		// 	"null_if.#":              "0",
-		// 	"skip_byte_order_mark":   "true",
-		// 	"preserve_space":         "false",
-		// 	"strip_outer_element":    "false",
-		// 	"disable_snowflake_data": "false",
-		// 	"disable_auto_convert":   "false",
-		// },
+		"parquet": {
+			before: map[string]interface{}{
+				"compression":    "AUTO",
+				"trim_space":     false,
+				"binary_as_text": true,
+				// TODO
+				// "null_if.#": "0",
+			},
+			after: map[string]interface{}{
+				"compression":    "SNAPPY",
+				"trim_space":     true,
+				"binary_as_text": false,
+			},
+		},
+		"xml": {
+			before: map[string]interface{}{
+				"compression": "AUTO",
+				// "trim_space":         false,
+				"ignore_utf8_errors": false,
+				// docs say default should be same as csv above, but that's not observed
+				// "null_if.#":              "0",
+				"skip_byte_order_mark":   true,
+				"preserve_space":         false,
+				"strip_outer_element":    false,
+				"disable_snowflake_data": false,
+				"disable_auto_convert":   false,
+			},
+			after: map[string]interface{}{
+				"compression": "AUTO",
+				// "trim_space":         true,
+				"ignore_utf8_errors": true,
+				// docs say default should be same as csv above, but that's not observed
+				// "null_if.#":              "0",
+				"skip_byte_order_mark":   false,
+				"preserve_space":         true,
+				"strip_outer_element":    true,
+				"disable_snowflake_data": true,
+				"disable_auto_convert":   true,
+			},
+		},
 	}
 
 	for ttype, params := range types {
@@ -367,9 +398,9 @@ func mapToTf(d map[string]interface{}) string {
 
 		switch t := v.(type) {
 		case string:
-			sb.WriteString(`""`)
+			sb.WriteString(`"`)
 			sb.WriteString(t)
-			sb.WriteString(`""`)
+			sb.WriteString(`"`)
 		case bool:
 			sb.WriteString(strconv.FormatBool(t))
 		}

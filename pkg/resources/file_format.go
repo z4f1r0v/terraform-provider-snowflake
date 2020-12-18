@@ -374,11 +374,12 @@ var fileFormatSchema = map[string]*schema.Schema{
 					Computed: true,
 					// COMPRESSION = AUTO | GZIP | BZ2 | BROTLI | ZSTD | DEFLATE | RAW_DEFLATE | NONE
 				},
-				"trim_space": {
-					Type:     schema.TypeBool,
-					Optional: true,
-					Computed: true,
-				},
+				// FIXME docs say this is supported, but I get `Option TRIM_SPACE is not valid for file format type xml.`
+				// "trim_space": {
+				// 	Type:     schema.TypeBool,
+				// 	Optional: true,
+				// 	Computed: true,
+				// },
 				"ignore_utf8_errors": {
 					Type:     schema.TypeBool,
 					Optional: true,
